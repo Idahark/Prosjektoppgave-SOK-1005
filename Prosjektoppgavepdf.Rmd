@@ -1,0 +1,252 @@
+---
+title: "prosjektoppgavepdf"
+output: pdf_document
+---
+
+# Prosjektoppgave SOK-1005
+Ida Oline Harkinn
+
+```{r setup, include = TRUE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+
+appwichstoreatt <- read_csv("~/6htjnfs78b-2/AppWichStoreAttributes.csv")
+county_crime <- read_csv("~/6htjnfs78b-2/county_crime.csv")
+county_demo <- read_csv("~/6htjnfs78b-2/county_demographic.csv")
+county_emp <- read_csv("~/6htjnfs78b-2/county_employment.csv")
+weekly_sales <- read_csv("~/6htjnfs78b-2/WEEKLY_SALES_10STORES.csv")
+weekly_weather <- read_csv("~/6htjnfs78b-2/WEEKLY_WEATHER.csv")
+
+ny2 <- weekly_sales %>%
+  rename(Store_Num = Store_num) %>%
+  left_join(appwichstoreatt, by = "Store_Num")
+
+ny3 <- ny2 %>%
+  rename(Weather_Station = Store_Weather_Station, County_Name = Store_County, Weather_Date = Date) %>%
+  left_join(weekly_weather, by = "Weather_Date") %>%
+  left_join(county_crime, by = "County_Name") %>%
+  left_join(county_demo, by = "County_Name") %>%
+  left_join(county_emp, by = "County_Name")
+
+
+```
+
+## Oppgave 1
+
+Oppgave 1 tar for seg sammensetting av flere datasett. Dette hjelpemiddelet kan ha en positiv påvirkning i utviklingen av en oppgave. Sammensetningen vil være med på å effektivisere sammenligningsprosessen. 
+
+Ved å slå sammen datasettene vil man kunne sammenligne flere aspekter. I denne prosessen valgte jeg å ta utgangspunkt i det største datasettet, Weekly Sales. Deretter valgte jeg å forandre navnene til kolonnene for å være kompatible med kolonner i de andre datasettene. Her brukes (Rename). Deretter dyttes de andre datasettene inn i samme. Dette blir gjort ved å bruke (Left_join). Et slikt datasett vil være med på å kunne analysere flere aspekter ved salg og kjøp. Hvilke faktorer som er i spill, og har en signifikant påvirkning av det totale resultatet.
+
+
+## Oppgave 2
+
+
+```{r, echo=TRUE}
+
+ukes <- ny3 %>%
+  rename(Date = Weather_Date) %>%
+  filter(grepl('REGULAR', Description), Store_Num == 2, Day == 8, Month == 4, Year == 2012) %>%
+  select(Description, Price, Sold, Cost, Profit)
+
+
+
+deres <- ukes %>%
+  filter(Price > 5.75)
+
+p1 <- ggplot(deres, aes(Price, Profit), color = Description) + 
+  geom_point(size = 3, col = "Blue") +
+  theme_bw()
+
+andres <- ny3 %>%
+  rename(Date = Weather_Date) %>%
+  filter(grepl('REGULAR', Description), Store_Num == 7, Day == 8, Month == 4, Year == 2012, Price > 5.75) %>%
+  select(Description, Price, Sold, Cost, Profit)
+
+p2 <- ggplot(andres, aes(Price, Profit), color = Description) + 
+  geom_point(size = 3, col = "Red") +
+  theme_bw()
+
+tredje <- ny3 %>%
+  rename(Date = Weather_Date) %>%
+  filter(grepl('REGULAR', Description), Store_Num == 5, Day == 8, Month == 4, Year == 2012, Price > 5.75) %>%
+  select(Description, Price, Sold, Cost, Profit)
+
+p3 <- ggplot(tredje, aes(Price, Profit), color = Description) + 
+  geom_point(size = 3, col = "Green") +
+  theme_bw()
+```
+
+En ukentlig rapport burde inneholde en analyse av salg og profitt. Dette vil tilsi en sammenligning mellom hvorvidt de har hatt en profitt i henhold til salg. I dataene gitt har det blitt en utregning av profitt. Dette kan vi visualisere ved bruk av både tabell og graf.
+
+
+
+```{r}
+
+gjnpruke <- ukes %>%
+  summarise(mean(Profit), sum(Profit))
+
+maxminuke <- ukes %>%
+  summarise(max(Profit), min(Profit))
+
+
+```
+
+
+
+|Total Profitt | Gjennomsnitt | Max Profitt | Minimum Profitt |
+:--------------|--------------|-------------|----------------:
+|7301          | 114          |         975 |           -596 |
+
+
+Figuren over viser den totale profitten bedrift nr 2 har i løpet av en uke. Profitten for bedrift nr 2 viser en inntekt på 7301 dollar. Bakgrunnen til denne er for å vise hvorvidt de har hatt en positiv økning per uke. Deretter viser den gjennomsnittprofitten per produkt solgt den enkelte uken. Gjennomsnittsprofitten for produktene ligger på 114 dollar i uken. Maks profitt er da høyeste inntekten de har fått i løpet av én uke på ett produkt de har tilbudt. Minimum profitt viser det produktet bedriften tjente minst på i løpet av perioden. Her har bedriften tapt 596 dollar.
+
+Disse dataene kan være med på å lage et større bilde. Ved å ha en slik analyse hver uke over en lengre tid, vil lage et større bilde med tanke på profitt. Den kan være med på å vise hvilke produkter som er populære hos kundene. Ved en konstant negativ profitt på enkelte varer, vil vise til en begrunnelse til å erstatte varen.
+
+
+
+```{r}
+
+plot_grid(p1, p2, p3, ncol = 3, labels = "AUTO")
+
+```
+
+
+Bakgrunnen til valget av disse datane er for å kunne vise hvorvidt bedriften har hatt profitt med sammenligning med andre innen samme County. Grafene viser profitten for hver bedrift. Den tar utgangspunkt i varer solgt på en pris større enn 5.75 dollar. Disse har en stor påvirkning på den endelige profitten. Graf A viser til dataene til bedriften. Her ser vi en høy profitt ved produkter satt på 7 dollar. Graf B og C viser til lokasjoner innen samme bedrift i samme County. Sammenligning mellom disse tre, kan vi se bedrift A har en større inntekt over B og C. En slik sammensetning av grafer har en effektiv påvirkning. Man kan se direkte forskjellen mellom de tre lokasjonene.
+
+Disse dataene kan også være med på å lage et større bilde. Ved å ha en slik analyse hver uke over en lengre tid, vil lage et større bilde med tanke på profitt. En utarbeidet ukentlig rapport kan vise til en endring fra uke til uke. Den kan vise hvorvidt mennesker har en høyere betalingsvillighet fra én County til en annen.
+
+
+## Oppgave 3
+
+I en månedsrapport er det viktig å ta hensyn til profitt og salg. En aggregert månedsanalyse vil ta for seg et helhetlig syn på bedriften. Denne prosessen kan ta for seg flere Counties, men med hensyn på oppgavens lengde vil den kun ta for seg 3.
+
+Oppgaven tar for seg dataene fra tre forskjellige Counties, og deres profitt over en lengre periode.
+```{r, echo=TRUE}
+
+county <- function(x){
+  ny3 %>%
+    filter(County_Name == x, Month == 5, Year ==2012) %>%
+    select(Description, Month, Profit)%>%
+    summarise(sum(Profit))
+}
+
+countymn3 <- function(x){
+  ny3 %>%
+    filter(County_Name == x, Month == 4, Year ==2012) %>%
+    select(Description, Month, Profit)%>%
+    summarise(sum(Profit))
+}
+
+countymnd2 <- function(x){
+  ny3 %>%
+    filter(County_Name == x, Month == 3, Year ==2013) %>%
+    select(Description, Month, Profit) %>%
+    summarise(sum(Profit))
+}
+
+##Første county
+
+county1 <- county("Power County")
+
+county13 <- countymn3("Power County")
+
+county12 <- countymnd2("Power County")
+
+
+##Andre County
+
+county2 <- county("River County")
+
+county23 <- countymn3("River County")
+
+county22 <- countymnd2("River County")
+
+##Tredje County
+
+county3 <- county("Lake County")
+
+county33 <- countymn3("Lake County")
+
+county32 <- countymnd2("Lake County")
+
+##Frame
+
+county <- c("Power County", "River County", "Lake County")
+April_year2012 <- c(134681, 43136, 39130)
+March_year2013 <- c(206593, 73544, 65651)
+mai <- c(109742,43575, 32077)
+april <- c(134681, 43136, 39130)
+
+df2 <- data.frame(county,
+                  april,
+                  mai)
+
+f1 <- ggplot(df2, aes(county, april))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous(labels = scales::comma)
+
+f2 <- ggplot(df2, aes(county, mai)) +
+  geom_bar(stat = "identity")
+
+```
+
+
+|County | april | mai |
+:-------|------|-------:
+|Power County | 134 681 | 109 742 |
+|River County | 43 136 | 43 575 |
+|Lake County | 39 130 | 32 077 |
+
+
+Tabellen ovenfor sammenligner profitten fra april og mai 2012. Her har både Power County og Lake County hatt en negativ nedgang av profitt. Valget av disse dataene er basert på et sammenlignbart nivå. Disse dataene kan bli til et visuelt verktøy ved bruk av en graf.
+```{r}
+
+plot_grid(f1, f2, ncol = 2, labels = "AUTO")
+
+```
+Grafen over tar for seg dataene gitt i tabellen over. Her ser vi forskjellen mellom profitten til bedriften i de to månedene i de 3 Countiene. En slik analyse er med på å se om det er en direkte sammenheng mellom de to månedene, og om det er en signifikant forskjell. En negativ nedgang i én måned vil ikke tilsi en kontinuerlig nedgang. Nedenfor gjør vi samme prosess, men på et årlig basis.
+
+
+
+|county | Year 2012 | Year 2013 |
+:-------|-----------|------------:
+|Power County | 134 681 | 206 593 |
+|River County | 43 135 | 73 544 |
+|Lake County | 39 130 | 65 651 |
+
+
+```{r, echo = TRUE}
+
+df <- data.frame(county,
+                 April_year2012,
+                 March_year2013)
+
+d1 <- ggplot(df, aes(county, April_year2012))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous(labels = scales::comma)
+
+d2 <- ggplot(df, aes(county, March_year2013)) +
+  geom_bar(stat = "identity")
+
+plot_grid(d1, d2, ncol = 2, labels = "AUTO")
+
+
+```
+
+
+Grafen over viser til forandringen av profitt over en tid på 11 måneder. Graf A tar utgangspunkt i profitt i april 2012. Den viser at det er en stor forskjell på de tre. Graf B tar utgangspunkt i profitten i mars 2013. En slik sammenligning er med på å vise hvorvidt det har vært en signifikant forandring i inntekt det siste året. En slik sammenligning kan være med på å vise en aggregert sammensetning over hvorvidt det er en forskjell mellom de tre countiene. På likhet med den ukentlige rapporten, kan månedlige rapporter settes sammen til å bli en aggregert årlig rapport. Hvilke tiltak har de lokasjonene med kontinuerlig stigende profitt? Og hvilke tiltak kan implementeres for å forbedre eksisterende og nye lokasjoner? I grafene over kan vi se at Power County har hatt en større profitt begge årene. Dermed kan vi se på hva som gjør de at de har en effektiv og økende profitt. 
+
+
+## Oppgave 4
+
+Dataene gitt viser til de forskjellige faktorene innen de eksisterende lokasjonene. Ved en positiv profittrate kan det bli ønskelig fra overordnende å ekspandere. Dette vil være med på å kunne øke den allerede eksisterende profitten. Dataene gitt ved eksisterende lokasjoner kan være med på å utarbeide et prosjekt ved ønsket utvidelse. Å konkludere med en ny lokasjon kan ha en kritisk påvirkning på profitten. 
+
+Dataene gitt i oppgaven viser til oppbygningen av samfunnet rundt de gitte lokasjonene. De viser til demografi, kriminalitet og arbeidsledighet. Dataene viser også til værforandringene, og hvordan dette påvirker salgsraten. Været kan være en påvirkende faktor i henhold til utarbeidelse av nye lokasjoner. Er det større sannsynlighet for mennesker å kjøpe sandwich på dager med dårlig vær? Er drive-through en spillende faktor? 
+
+En annen spillende faktor er demografien. Oppbygningen av befolkningen kan være påvirkende på utviklingen av en ny lokasjon. Kriminalitet for hver enkelt County kan være speilende med arbeidsledigheten. Arbeidsledigheten kan være en direkte påvirkning til betalingsvilligheten til befolkningen. Har dette en direkte påvirkning på utviklingen av en ny lokasjon? Ved å ta utgangspunkt i allerede eksisterende lokasjoner, kan en bruke ressurser der man ser det er profitt. Implementering av faktorer med positiv påvirkning på andre lokasjoner vil da være gunstig. Sjansen for å lykkes vil være større ved å ta hensyn til gitt data, og handle deretter.
+
